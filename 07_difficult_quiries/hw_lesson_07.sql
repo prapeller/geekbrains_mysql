@@ -1,6 +1,6 @@
 # 1.	Составьте список пользователей users, которые осуществили хотя бы один заказ orders в интернет магазине.
 
-# USE shop;
+USE shop;
 
 # DROP TABLE IF EXISTS orders;
 # CREATE TABLE orders
@@ -59,7 +59,7 @@ WHERE id in (SELECT user_id FROM orders GROUP BY user_id);
 
 SELECT u.id, u.name
 FROM users u
-         RIGHT JOIN orders o ON u.id = o.user_id
+         INNER JOIN orders o ON u.id = o.user_id
 GROUP BY u.id;
 
 # 2.	Выведите список товаров products и разделов catalogs, который соответствует товару.
