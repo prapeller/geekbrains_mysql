@@ -3,7 +3,14 @@
 # 1.	Пусть в таблице users поля created_at и updated_at оказались незаполненными. Заполните их текущими датой и временем.
 #
 USE shop;
-#
+
+SELECT * FROM catalogs
+WHERE EXISTS (SELECT 1 FROM products WHERE products.catalog_id = catalogs.id);
+
+SELECT id, name, price, catalog_id FROM products
+WHERE (5060, products.catalog_id) IN (SELECT products.price, catalogs.id FROM catalogs);
+
+
 # DROP TABLE IF EXISTS users;
 # CREATE TABLE users
 # (

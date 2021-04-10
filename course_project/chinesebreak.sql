@@ -5,8 +5,7 @@
 3) скрипты создания структуры БД (с первичными ключами, индексами, внешними ключами);
 4) создать ERDiagram для БД;
 5) скрипты наполнения БД данными;
-
-6) скрипты характерных выборок (включающие группировки, JOIN'ы, вложенные таблицы);
+6) скрипты характерных выборок (включающие группировки 5, JOIN'ы 5, вложенные таблицы 10);
 7) представления (минимум 2);
 8) хранимые процедуры / триггеры;
 
@@ -205,15 +204,15 @@ CREATE TABLE task
 (
     id               SERIAL PRIMARY KEY,
     lesson_id        BIGINT UNSIGNED,
-    task_type_id     BIGINT UNSIGNED    NOT NULL,
+    task_type_id     BIGINT UNSIGNED NOT NULL,
     creator_admin_id BIGINT UNSIGNED,
     created_at       DATETIME DEFAULT NOW(),
-    updator_admin_id BIGINT UNSIGNED    NOT NULL,
+    updator_admin_id BIGINT UNSIGNED NOT NULL,
     updated_at       DATETIME ON UPDATE NOW(),
-    elements         JSON               NOT NULL,
-    right_sentences  JSON               NOT NULL,
-    wrong_sentences  JSON               NOT NULL,
-    media            JSON               NOT NULL,
+    elements         JSON            NOT NULL,
+    right_sentences  JSON            NOT NULL,
+    wrong_sentences  JSON            NOT NULL,
+    media            JSON            NOT NULL,
     CONSTRAINT lesson_id_fk FOREIGN KEY (lesson_id) REFERENCES lesson (id) ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT task_type_id_fk FOREIGN KEY (task_type_id) REFERENCES task_type (id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT task_creator_admin_id_fk FOREIGN KEY (creator_admin_id) REFERENCES admin (id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -271,29 +270,34 @@ CREATE TABLE word
     INDEX word_lit_ind (lit),
     CONSTRAINT word_topic_id FOREIGN KEY (topic_id) REFERENCES topic (id),
     CONSTRAINT word_image_media_id FOREIGN KEY (image_media_id) REFERENCES media (id),
-    CONSTRAINT word_audio_media_id FOREIGN KEY (image_media_id) REFERENCES media (id)
+    CONSTRAINT word_audio_media_id FOREIGN KEY (audio_media_id) REFERENCES media (id)
 );
+# проверка невозмоности добавить аудио файл в
+# дописать триггер на проверку типа media в image_media_id
+# дописать триггер на проверку типа media в audio_media_id
 
 INSERT INTO word (topic_id, `char`, pinyin, lang, lit, image_media_id, audio_media_id)
 VALUES (1, '你好', 'nǐhǎo', 'привет', 'тебе добро', 1, 2);
 
 
+# ALTER TABLE user_progress_grammar DROP CONSTRAINT user_progress_grammar_grammar_id_fk;
 DROP TABLE IF EXISTS grammar;
 CREATE TABLE grammar
 (
     id          SERIAL PRIMARY KEY,
     topic_id    BIGINT UNSIGNED,
     name        VARCHAR(512) NOT NULL,
-    explanation VARCHAR(512) NOT NULL,
+    explanation TEXT(1000),
     `char`      VARCHAR(512) NOT NULL,
     pinyin      VARCHAR(512) NOT NULL,
     lang        VARCHAR(512) NOT NULL,
     lit         VARCHAR(512) NOT NULL,
     structure   VARCHAR(512) NOT NULL,
     INDEX grammar_name_ind (name),
-    INDEX gramar_expl_ind (explanation),
+    FULLTEXT expl_ind (explanation),
     CONSTRAINT grammar_topic_id FOREIGN KEY (topic_id) REFERENCES topic (id)
 );
+
 
 INSERT INTO grammar (topic_id, name, explanation, `char`, pinyin, lang, lit, structure)
 VALUES (1, 'Личные местоимения',
@@ -324,7 +328,7 @@ CREATE TABLE `character`
     INDEX character_lang_ind (lang),
     CONSTRAINT character_topic_id FOREIGN KEY (topic_id) REFERENCES topic (id),
     CONSTRAINT character_image_media_id FOREIGN KEY (image_media_id) REFERENCES media (id),
-    CONSTRAINT character_audio_media_id FOREIGN KEY (image_media_id) REFERENCES media (id)
+    CONSTRAINT character_audio_media_id FOREIGN KEY (audio_media_id) REFERENCES media (id)
 );
 
 INSERT INTO `character` (topic_id, `char`, pinyin, lang, image_media_id, audio_media_id, char_animation_media_id)
@@ -342,33 +346,35 @@ DROP TABLE IF EXISTS user;
 CREATE TABLE user
 (
     id            SERIAL PRIMARY KEY,
-    first_name    VARCHAR(50)  NOT NULL,
-    last_name     VARCHAR(50)  NOT NULL,
+    name          VARCHAR(50)  NOT NULL,
     email         VARCHAR(50)  NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    phone         BIGINT UNSIGNED,
-    registered_at DATETIME              DEFAULT NOW(),
+    phone         BIGINT UNSIGNED UNIQUE DEFAULT NULL,
+    age           BIGINT UNSIGNED        DEFAULT NULL,
+    registered_at DATETIME               DEFAULT NOW(),
     updated_at    DATETIME ON UPDATE NOW(),
     status        ENUM (
         'trial',
         'premium_1',
         'premium_6',
-        'premium_12')          NOT NULL DEFAULT 'trial' COMMENT 'по умолчанию у пользователя статус подписки trial, если по подписке - то может быть на месяц, пол года или на год',
+        'premium_12')          NOT NULL  DEFAULT 'trial' COMMENT 'по умолчанию у пользователя статус подписки trial, если по подписке - то может быть на месяц, пол года или на год',
     purchased_at  DATETIME,
-    INDEX user_first_last_name (first_name, last_name),
+    INDEX user_name (name),
     INDEX user_email (email),
     INDEX user_status (status)
 ) COMMENT 'пользователь (ученик) - использует web/mobile app';
 
-INSERT INTO user (first_name, last_name, email, password_hash, phone, registered_at, updated_at, status, purchased_at)
-VALUES ('user1', 'userov1', 'pish-pish@gmail.com', 'ololopishpishrealne123', 89235230612, NOW(), NOW(), 'trial', NULL);
+INSERT INTO user (name, email, password_hash, phone, age, registered_at, status, purchased_at)
+VALUES ('user1', 'pish-pish@gmail.com', 'ololopishpishrealne123', 89235230612, 16, NOW(), DEFAULT, DEFAULT),
+       ('user2', 'pish-pish2@gmail.com', 'ololopishpishrealne124', 89235230614, 16, NOW(), DEFAULT, DEFAULT),
+       ('user3', 'pish-pish3@gmail.com', 'ololopishpishrealne124', 89235230613, 80, NOW(), 'premium_6', NOW());
 
 DROP TABLE IF EXISTS user_progress_tasks;
 CREATE TABLE user_progress_tasks
 (
     user_id    BIGINT UNSIGNED NOT NULL,
     task_id    BIGINT UNSIGNED NOT NULL,
-    checked    BIT      DEFAULT 0,
+    is_checked BIT      DEFAULT 0,
     checked_at DATETIME DEFAULT NULL ON UPDATE NOW(),
     PRIMARY KEY (user_id, task_id),
     CONSTRAINT user_progress_task_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id),
@@ -382,75 +388,158 @@ SET checked = 1
 WHERE user_id = 1
   AND task_id = 1;
 
+DROP TABLE IF EXISTS mnemonic_stage;
+CREATE TABLE mnemonic_stage
+(
+    id                  SERIAL PRIMARY KEY,
+    hours_before_repeat INT UNSIGNED NOT NULL
+);
+
+INSERT INTO mnemonic_stage (id, hours_before_repeat)
+VALUES (1, 0),
+       (2, 12),
+       (3, 24),
+       (4, 96),
+       (5, 336),
+       (6, 720),
+       (7, 1440),
+       (8, 2880);
+
 DROP TABLE IF EXISTS user_progress_words;
 CREATE TABLE user_progress_words
 (
-    user_id       BIGINT UNSIGNED NOT NULL,
-    word_id       BIGINT UNSIGNED NOT NULL,
-    checked_at    DATETIME                            DEFAULT NULL ON UPDATE NOW(),
-    checked_times ENUM ('0', '1', '2', '3', '4', '5') DEFAULT '0',
-    expire_at     DATETIME                            DEFAULT NULL,
-    count_right   INT UNSIGNED                        DEFAULT 0,
-    count_wrong   INT UNSIGNED                        DEFAULT 0,
+    user_id           BIGINT UNSIGNED NOT NULL,
+    word_id           BIGINT UNSIGNED NOT NULL,
+    checked_at        DATETIME                 DEFAULT NULL ON UPDATE NOW(),
+    mnemonic_stage_id BIGINT UNSIGNED NOT NULL DEFAULT 1,
+    expire_at         DATETIME                 DEFAULT NULL,
+    count_right       INT UNSIGNED             DEFAULT 0 COMMENT 'счетчик правльных ответов',
+    count_wrong       INT UNSIGNED             DEFAULT 0 COMMENT 'счетчик неправильных ответов',
     PRIMARY KEY (user_id, word_id),
-    CONSTRAINT user_progress_word_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id),
-    CONSTRAINT user_progress_word_word_id_fk FOREIGN KEY (word_id) REFERENCES word (id)
+    CONSTRAINT upw_mnemonic_stage_fk FOREIGN KEY (mnemonic_stage_id) REFERENCES mnemonic_stage (id),
+    CONSTRAINT upw_user_id FOREIGN KEY (user_id) REFERENCES user (id),
+    CONSTRAINT upw_word_id FOREIGN KEY (word_id) REFERENCES word (id)
 
-) COMMENT 'сначала у всех элементов счетчик правильных ответов (checked_right=0) и все элементы находятся на первой ступени "мнемонической лесетки", после того как элемент проходится впервые в таске - checked_right = 1, и expire_at = NOW() + время первой ступени, после того как у него истечет это "мнемотичекое время" первой ступени - он попадает в пул повторения, после повторения его прохождением упражнение "на повторение" у этого элемента увеличивается checked_right + 1 и checked_times + 1, а expire_at становится равным NOW() + время второй ступени ';
+) COMMENT 'сначала у всех элементов счетчик правильных ответов (count_right=0) и все элементы находятся на первой
+ступени "мнемонической лесенки", после того как элемент проходится впервые в задании - count_right = 1,
+и expire_at = NOW() + mnemonic_stages.hourse_before_repeat первой ступени, после того как настает expire_at -
+элемент попадает в "пул повторения". после прохождениея упражнения "на повторение" элемента из пула повторения - у
+элемента увеличивается count_right + 1 и checked_times + 1, а expire_at становится равным
+NOW() + mnemonic_stages.hourse_before_repeat второй ступени ';
+
 
 INSERT INTO user_progress_words (user_id, word_id)
 VALUES (1, 1);
-UPDATE user_progress_words
-SET checked_times = '1',
-    count_right   = 1,
-    expire_at     = ADDTIME(NOW(), '06:00:00')
+
+UPDATE user_progress_words upw
+SET upw.mnemonic_stage_id = CASE
+                                WHEN upw.mnemonic_stage_id < 8 THEN mnemonic_stage_id + 1
+                                WHEN upw.mnemonic_stage_id >= 8 THEN 8
+    END,
+    count_right           = count_right + 1,
+    expire_at             = ADDDATE(NOW(), INTERVAL (SELECT hours_before_repeat
+                                                     FROM mnemonic_stage
+                                                     WHERE mnemonic_stage.id = upw.mnemonic_stage_id) HOUR)
+
 WHERE user_id = 1
   AND word_id = 1;
 
-DROP TABLE IF EXISTS user_progress_grammar;
-CREATE TABLE user_progress_grammar
+
+DROP TABLE IF EXISTS user_progress_grammars;
+CREATE TABLE user_progress_grammars
 (
-    user_id       BIGINT UNSIGNED NOT NULL,
-    grammar_id    BIGINT UNSIGNED NOT NULL,
-    checked_at    DATETIME                            DEFAULT NULL ON UPDATE NOW(),
-    checked_times ENUM ('0', '1', '2', '3', '4', '5') DEFAULT '0',
-    expire_at     DATETIME                            DEFAULT NULL,
-    count_right   INT UNSIGNED                        DEFAULT 0,
-    count_wrong   INT UNSIGNED                        DEFAULT 0,
+    user_id           BIGINT UNSIGNED NOT NULL,
+    grammar_id        BIGINT UNSIGNED NOT NULL,
+    checked_at        DATETIME                 DEFAULT NULL ON UPDATE NOW(),
+    mnemonic_stage_id BIGINT UNSIGNED NOT NULL DEFAULT 1,
+    expire_at         DATETIME                 DEFAULT NULL,
+    count_right       INT UNSIGNED             DEFAULT 0,
+    count_wrong       INT UNSIGNED             DEFAULT 0,
     PRIMARY KEY (user_id, grammar_id),
-    CONSTRAINT user_progress_grammar_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id),
-    CONSTRAINT user_progress_grammar_grammar_id_fk FOREIGN KEY (grammar_id) REFERENCES grammar (id)
+    CONSTRAINT upg_mnemonic_stage_id FOREIGN KEY (mnemonic_stage_id) REFERENCES mnemonic_stage (id),
+    CONSTRAINT upg_user_id FOREIGN KEY (user_id) REFERENCES user (id),
+    CONSTRAINT upg_grammar_id FOREIGN KEY (grammar_id) REFERENCES grammar (id)
 );
 
-INSERT INTO user_progress_grammar (user_id, grammar_id)
-VALUES (1, 1);
-UPDATE user_progress_grammar
-SET checked_times = '1',
-    count_right   = 1,
-    expire_at     = ADDTIME(NOW(), '06:00:00')
+UPDATE user_progress_grammars upg
+SET upg.mnemonic_stage_id = CASE
+                                WHEN upg.mnemonic_stage_id < 8 THEN mnemonic_stage_id + 1
+                                WHEN upg.mnemonic_stage_id >= 8 THEN 8
+    END,
+    count_right           = count_right + 1,
+    expire_at             = ADDDATE(NOW(), INTERVAL (SELECT hours_before_repeat
+                                                     FROM mnemonic_stage
+                                                     WHERE mnemonic_stage.id = upg.mnemonic_stage_id) HOUR)
+
 WHERE user_id = 1
   AND grammar_id = 1;
 
-DROP TABLE IF EXISTS user_progress_character;
-CREATE TABLE user_progress_character
+DROP TABLE IF EXISTS user_progress_characters;
+CREATE TABLE user_progress_characters
 (
-    user_id       BIGINT UNSIGNED NOT NULL,
-    character_id    BIGINT UNSIGNED NOT NULL,
-    checked_at    DATETIME                            DEFAULT NULL ON UPDATE NOW(),
-    checked_times ENUM ('0', '1', '2', '3', '4', '5') DEFAULT '0',
-    expire_at     DATETIME                            DEFAULT NULL,
-    count_right   INT UNSIGNED                        DEFAULT 0,
-    count_wrong   INT UNSIGNED                        DEFAULT 0,
+    user_id           BIGINT UNSIGNED NOT NULL,
+    character_id      BIGINT UNSIGNED NOT NULL,
+    checked_at        DATETIME                 DEFAULT NULL ON UPDATE NOW(),
+    mnemonic_stage_id BIGINT UNSIGNED NOT NULL DEFAULT 1,
+    expire_at         DATETIME                 DEFAULT NULL,
+    count_right       INT UNSIGNED             DEFAULT 0,
+    count_wrong       INT UNSIGNED             DEFAULT 0,
     PRIMARY KEY (user_id, character_id),
-    CONSTRAINT user_progress_character_user_id_fk FOREIGN KEY (user_id) REFERENCES user (id),
-    CONSTRAINT user_progress_character_character_id_fk FOREIGN KEY (character_id) REFERENCES `character` (id)
+    CONSTRAINT upc_mnemonic_stage_id FOREIGN KEY (mnemonic_stage_id) REFERENCES mnemonic_stage (id),
+    CONSTRAINT upc_user_id FOREIGN KEY (user_id) REFERENCES user (id),
+    CONSTRAINT upc_character_id FOREIGN KEY (character_id) REFERENCES `character` (id)
 );
 
-INSERT INTO user_progress_character (user_id, character_id)
-VALUES (1, 1);
-UPDATE user_progress_character
-SET checked_times = '1',
-    count_right   = 1,
-    expire_at     = ADDTIME(NOW(), '06:00:00')
+UPDATE user_progress_characters upc
+SET upc.mnemonic_stage_id = CASE
+                                WHEN upc.mnemonic_stage_id < 8 THEN mnemonic_stage_id + 1
+                                WHEN upc.mnemonic_stage_id >= 8 THEN 8
+    END,
+    count_right           = count_right + 1,
+    expire_at             = ADDDATE(NOW(), INTERVAL (SELECT hours_before_repeat
+                                                     FROM mnemonic_stage
+                                                     WHERE mnemonic_stage.id = upc.mnemonic_stage_id) HOUR)
+
 WHERE user_id = 1
   AND character_id = 1;
+
+DROP TABLE IF EXISTS messages;
+CREATE TABLE messages
+(
+    id         SERIAL PRIMARY KEY,
+    type       ENUM ('user_admin', 'admin_user') COMMENT 'направление а)пользователь-админ, б) админ-пользователь.',
+    from_id    BIGINT UNSIGNED NOT NULL,
+    to_id      BIGINT UNSIGNED NOT NULL,
+    theme      VARCHAR(512)    NOT NULL,
+    body       TEXT,
+    file       MEDIUMBLOB,
+    is_checked BIT      DEFAULT 0,
+    created_at DATETIME DEFAULT NOW()
+) COMMENT 'обратная связь с пользователями, отправитель и получатель могут быть как user_id, так и admin_id, в зависимости от типа. друг другу пользователи не отправляют, ';
+
+DROP TABLE IF EXISTS users_settings;
+CREATE TABLE users_settings
+(
+    id                        SERIAL PRIMARY KEY,
+    user_id                   BIGINT UNSIGNED NOT NULL,
+    current_language_id       BIGINT UNSIGNED                                                  DEFAULT 1,
+    text_size                 ENUM ('15','18','22')                                            DEFAULT '18',
+    chinese_display_type      ENUM ('only_characters', 'only_pinyin', 'characters_and_pinyin') DEFAULT 'characters_and_pinyin',
+    audio_speed               ENUM ('0.6', '1.0', '1.5')                                       DEFAULT '1.0',
+    audio_effects_are_on      BIT                                                              DEFAULT 1,
+    audition_lessons_are_on   BIT                                                              DEFAULT 1,
+    characters_lessons_are_on BIT                                                              DEFAULT 1,
+    speaking_lessons_are_on   BIT                                                              DEFAULT 1,
+    reminders_are_on          BIT                                                              DEFAULT 1
+);
+
+DROP TABLE IF EXISTS users_daily_goals;
+CREATE TABLE users_daily_goals
+(
+    id              SERIAL PRIMARY KEY,
+    user_id         BIGINT UNSIGNED  NOT NULL,
+    daily_goal      TINYINT UNSIGNED NOT NULL DEFAULT 50,
+    goal_is_reached BIT                       DEFAULT 0,
+    goal_date       DATETIME                  DEFAULT NOW(),
+    strike_qty      BIGINT UNSIGNED  NOT NULL COMMENT 'страйк - количетсво достигший цель дней подряд - 1. например, если пользователь 2 дня подряд достигает свою ежедневную цель по баллам - у него 1 страйк, если 3 дня подряд - 2 страйка'
+) COMMENT 'пользователь выставляет ежедневную цель по баллам, набирает их в зависимости от количества срабатываний счетчика count_right в элементах';

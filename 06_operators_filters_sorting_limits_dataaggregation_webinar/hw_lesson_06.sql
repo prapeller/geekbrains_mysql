@@ -1,11 +1,9 @@
 # Работаем с БД vk и тестовыми данными, которые вы сгенерировали ранее:
 
-USE vk;
-
 #1. Пусть задан некоторый пользователь. Из всех друзей этого пользователя найдите человека, который больше всех общался
 # с нашим пользователем.
 
-# на примере пользователя с id = 18, определим кто ему больше всех написал...
+# на примере пользователя с id = 18,
 # с 38м дружили до этого, появилась у него парочка друзей после: 37, 16
 
 # INSERT INTO friend_requests (initiator_user_id, target_user_id, status, confirmed_at)
@@ -26,28 +24,63 @@ USE vk;
 #        (38, 18, 'ok!'),
 #        (38, 16, 'lets go party!');
 
-# 18й и его друзья
+#1. Пусть задан некоторый пользователь. Из всех друзей этого пользователя найдите человека, который больше всех общался
+# с нашим пользователем.
+
+# а)
+
+SELECT friend, COUNT(*) qty
+FROM
+#     кто писал 18му
+(SELECT from_user_id friend
+ FROM messages
+ WHERE from_user_id IN (SELECT target_user_id
+                        FROM friend_requests
+                        WHERE initiator_user_id = 18
+                          AND status = 'approved'
+                        UNION
+                        SELECT initiator_user_id
+                        FROM friend_requests
+                        WHERE target_user_id = 18
+                          AND status = 'approved')
+   AND to_user_id = 18
+
+ UNION ALL
+
+#     кому писал 18й
+ SELECT to_user_id friend
+ FROM messages
+ WHERE to_user_id IN (SELECT target_user_id
+                      FROM friend_requests
+                      WHERE initiator_user_id = 18
+                        AND status = 'approved'
+                      UNION
+                      SELECT initiator_user_id
+                      FROM friend_requests
+                      WHERE target_user_id = 18
+                        AND status = 'approved')
+   AND from_user_id = 18
+) total
+GROUP BY friend
+ORDER BY qty DESC
+LIMIT 1;
+
+
+# б) созданим таблицу друзей
 DROP VIEW IF EXISTS 18_and_friends;
 CREATE VIEW 18_and_friends AS
-SELECT initiator_user_id 18_and_friends
+SELECT target_user_id friend
 FROM friend_requests
-WHERE status = 'approved'
-  AND (initiator_user_id = 18 OR target_user_id = 18)
+WHERE initiator_user_id = 18
+  AND status = 'approved'
 UNION
-SELECT target_user_id
+SELECT initiator_user_id friend
 FROM friend_requests
-WHERE status = 'approved'
-  AND (initiator_user_id = 18 OR target_user_id = 18);
+WHERE target_user_id = 18
+  AND status = 'approved';
 
-SELECT *
-FROM 18_and_friends;
-
-# удалим шум из сообщений отправки самому себе
-DELETE
-FROM messages
-where from_user_id = to_user_id;
-
-# преписка с участием 18го и его друзей
+# преписка с участием 18го
+DROP VIEW IF EXISTS `18_and_friends_chat`;
 CREATE VIEW 18_and_friends_chat AS
 SELECT *
 FROM messages
@@ -56,12 +89,16 @@ WHERE (from_user_id IN (SELECT * FROM 18_and_friends) AND to_user_id = 18)
 ORDER BY from_user_id;
 
 # лучший друг и количество сообщений (ему + от него)
-SELECT best_friend_id, COUNT(*) messages_qty FROM (SELECT from_user_id best_friend_id
-FROM 18_and_friends_chat WHERE from_user_id != 18
-UNION ALL
-SELECT to_user_id
-FROM 18_and_friends_chat WHERE to_user_id != 18) AS 18_chat
-GROUP BY best_friend_id
+SELECT friend, COUNT(*) sum
+FROM (SELECT from_user_id friend
+      FROM 18_and_friends_chat
+      WHERE from_user_id != 18
+      UNION ALL
+      SELECT to_user_id
+      FROM 18_and_friends_chat
+      WHERE to_user_id != 18) AS 18_chat
+GROUP BY friend
+ORDER BY sum DESC
 LIMIT 1;
 
 
