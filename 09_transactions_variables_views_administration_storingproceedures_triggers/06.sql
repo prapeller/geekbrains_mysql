@@ -127,6 +127,7 @@ set global innodb_flush_log_at_trx_commit = 0;
 # variables
 
 use shop;
+
 select @total := count(*)
 from products;
 
@@ -147,6 +148,7 @@ select @id;
 
 select *
 from tbl1;
+
 set @start = 0;
 select @start := @start + 1 as id, value
 from tbl1;
