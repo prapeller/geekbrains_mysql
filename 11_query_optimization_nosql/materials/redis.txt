@@ -1,0 +1,50 @@
+MSET fst 1 snd 2 thd 3 fth 4
+
+SET key "hello world!"
+
+HSET admin login "root"
+HSET admin pass "password"
+HSET admin register_at "2017-09-01"
+
+HMSET admin login "root" pass "password" register_at "2017-09-01"
+HEXISTS admin login         # 1
+HEXISTS admin name          # 0
+HGET admin login            # root
+HKEYS admin                 # login/pass/register_at
+HVALS admin                 # root/password/2017-09-01
+HGETALL admin               # login/root/pass/password/register_at/2017-09-01
+
+HLEN admin                  # 3
+
+SADD email igorsimdyanov@gmail.com igor@simdyanov.ru igor@softtime.ru i.simdyanov@rambler-co.ru
+SADD subscribers igor@simdyanov.ru igor@softtime.ru
+SMEMBERS email              # igorsimdyanov@gmail.com igor@simdyanov.ru igor@softtime.ru i.simdyanov@rambler-co.ru
+SCARD                       # 4
+SREM email igor@softtime.ru # 1
+SPOP email                  # i.simdyanov@rambler-co.ru
+SCARD                       # 2
+
+SADD email igorsimdyanov@gmail.com igor@simdyanov.ru igor@softtime.ru i.simdyanov@rambler-co.ru
+SADD subscribers igor@sibdyanov.ru igor@softtime.ru
+
+SINTER email subscribers    # common emails
+SDIFF email subscribers     # different
+SUNION subscribers email    # unique in both
+
+SELECT 1
+-- in 1st db
+
+SET key 'first database'
+-- ok
+GET key
+-- 'first database'
+
+SELECT 0
+-- ok
+
+keys *
+--email/hello/....fth/thd
+
+GET key
+-- 'hello world'
+

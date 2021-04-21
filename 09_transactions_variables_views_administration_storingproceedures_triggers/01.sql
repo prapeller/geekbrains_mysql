@@ -1,4 +1,4 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # transactions
 use bank;
 
@@ -74,7 +74,7 @@ from accounts;
 # return back to autocommit after any command
 set autocommit = 1;
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # ACID within transactions:
 #     atomicity - whole transaction as single unit - or commit, or rollback
@@ -87,14 +87,17 @@ set autocommit = 1;
 # 1) read uncommitted - transaction can see other uncommitted transactions
 set transaction isolation level read uncommitted;
 
-# 2) read committed - transaction can see changes committed when this one started, but what this one changed - cant be seen by others till commit (can make one command and get 2 different results)
+# 2) read committed - transaction can see changes committed when this one started, but what this one changed - cant be
+# seen by others till commit (can make one command and get 2 different results)
 set transaction isolation level read committed;
 
-# 3) repeatable read - the same as previous, but all commands give the same result, set as default in mysql (can see phantom row if chosen row sets and other transaction added / deleted rows)
+# 3) repeatable read - the same as previous, but all commands give the same result, set as default in mysql (can see
+# phantom row if chosen row sets and other transaction added / deleted rows)
 set transaction isolation level repeatable read;
 -- default
 
-# 4) serializable - the same as previous, but without phantom rows conflict, it blocks every row that this transaction is reading (so conflicts can happen while blocking)
+# 4) serializable - the same as previous, but without phantom rows conflict, it blocks every row that this transaction
+# is reading (so conflicts can happen while blocking)
 set transaction isolation level serializable;
 
 
@@ -123,7 +126,7 @@ set global innodb_flush_log_at_trx_commit = 0;
 # mvcc is being supported only at 'repeatable read' and 'read committed' isolation levels
 
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # variables
 
 use shop;
@@ -167,7 +170,7 @@ set session read_buffer_size = 2097152;
 set @@session.read_buffer_size = 2097152;
 set @@session.read_buffer_size = default;
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # temporary table
 
 create temporary table temp
@@ -184,7 +187,7 @@ describe temp;
 # -rw-r--r-- 1 prape 197609 12582912 Apr  9 17:18  ibtmp1       <-- table space for temporary tables
 
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # dynamic request
 
 use shop;
@@ -196,7 +199,7 @@ set @catalog_id = 1;
 execute prd using @catalog_id;
 drop prepare prd;
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # view
 
 select *
@@ -235,6 +238,7 @@ create or replace view processors as
 select id, name, price, catalog_id
 from products
 where catalog_id = 1;
+
 select *
 from processors;
 
@@ -246,6 +250,7 @@ with check option;
 
 insert into v1
 values ('fst4');
+
 insert into v1
 values ('fst5'); -- check option failure
 

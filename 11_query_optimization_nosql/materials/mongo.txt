@@ -1,0 +1,54 @@
+ps aux | grep mongod
+--ok
+
+mongo
+
+db.version()
+--3.2.6
+
+db.version
+--function () {return this.serverBuildInfo().version;}
+
+use shop
+--switched to db shop
+
+show dbs
+--local 0.000.gb
+
+db.shop.insert({name: 'Ольга'})
+
+show dbs
+--local 0.000.gb
+--shop 0.000 gb
+
+db.shop.find()
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Olga'}
+
+db.shop.insert({name: 'Александр'})
+
+db.shop.count()
+--2
+
+db.shop.find()
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Olga'}
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Alexandr'}
+
+db.shop.find({name: 'Olga'})
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Olga'}
+
+db.shop.update({name: 'Ольга'}, {$set: { email: 'olga@gmail.com' }})
+
+db.shop.find()
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Olga', 'email': 'olga@gmail.com'}
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Alexandr'}
+
+db.shop.update({name: 'Ольга'}, {$unset: { email: '' }})
+
+db.shop.find()
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Olga'}
+--{'_id' : ObjectId('29364283649236ygi2ygi3u235j2g'), 'name' : 'Alexandr'}
+
+db.shop.update({name: 'Ольга'}, {$set: { contacts: { email: ['olga@gmail.com', 'olga@mail.ru'], skype: 'olgashop' }}})
+db.shop.update({name: 'Александр'}, {$set: { contacts: { email: ['alex@gmail.com'], skype: 'alexander' }}})
+
+db.shop.update({name: 'Александр'}, {$push: { 'contacts.email': 'alex@mail.ru' }})
